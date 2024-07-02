@@ -110,6 +110,11 @@ jobs:
           ssh -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}"
           scp -o StrictHostKeyChecking=no .env $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}/.env
 
+      - name: Deploy Database schema
+        run: |
+          npm run prisma:concat_prd
+          npm run prisma:push
+
       - name: Deploy Docker image to VPS
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
