@@ -112,6 +112,7 @@ jobs:
 
       - name: Deploy Database schema
         run: |
+          npm ci
           npm run prisma:concat_prd
           npm run prisma:push
 
