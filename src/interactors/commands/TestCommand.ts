@@ -4,29 +4,26 @@ import { Bot } from "../../client";
 import ICommand from "../../interfaces/ICommand";
 
 @autoInjectable()
-class InfoCommand implements ICommand {
+class TestCommand implements ICommand {
 	constructor(private client?: Bot) {}
 
 	getName(): string {
-		return "info";
+		return "test";
 	}
 
 	getSlashCommandBuilder(): SlashCommandBuilder {
 		return new SlashCommandBuilder()
 			.setName(this.getName())
-			.setDescription("Get some bot info") as SlashCommandBuilder;
+			.setDescription("Dev command for @Htup") as SlashCommandBuilder;
 	}
 
-	async hasPermissions(): Promise<boolean> {
-		return true;
+	async hasPermissions(interaction: CommandInteraction): Promise<boolean> {
+		return interaction.user.id === "244909794836611082";
 	}
 
 	async execute(interaction: CommandInteraction): Promise<any> {
-		interaction.reply({
-			content: "Info",
-			ephemeral: true,
-		});
+		interaction.reply("Hello, Htup!");
 	}
 }
 
-export default InfoCommand;
+export default TestCommand;
