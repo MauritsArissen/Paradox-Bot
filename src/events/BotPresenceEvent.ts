@@ -14,7 +14,7 @@ class BotPresenceEvent implements IEvent {
 		client.user.setPresence({
 			activities: [
 				{
-					name: "nooothing...",
+					name: "World of Warcraft Classic",
 				},
 			],
 		});
