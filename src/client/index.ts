@@ -11,7 +11,8 @@ class Bot extends Client {
 	public buttons: Collection<string, IButton> = new Collection();
 	public selectMenus: Collection<string, ISelectMenu> = new Collection();
 	public modals: Collection<string, IModal> = new Collection();
-	public xpCooldown: Collection<string, number> = new Collection();
+	public lastCount: number = 0;
+	public lastUser: string = "";
 	public constructor() {
 		super({
 			intents: [
