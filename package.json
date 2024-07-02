@@ -1,0 +1,42 @@
+{
+  "name": "paradoxbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/bot.ts",
+  "scripts": {
+    "start": "nodemon --legacy-watch \"src/**\" --ext \"js,ts,json\" --exec \"ts-node --files src/bot.ts\"",
+    "build": "tsc -p .",
+    "eslint:github-action": "eslint ./src",
+    "prisma:concat_dev": "concat -o ./src/database/runtime.prisma ./src/database/DEV.prisma ./src/database/schema.prisma",
+    "prisma:concat_prd": "concat -o ./src/database/runtime.prisma ./src/database/PRD.prisma ./src/database/schema.prisma",
+    "prisma:generate": "npx prisma generate --schema=./src/database/runtime.prisma",
+    "prisma:push": "npx prisma db push --schema=./src/database/runtime.prisma --accept-data-loss"
+  },
+  "author": "Maurits Arissen",
+  "license": "ISC",
+  "dependencies": {
+    "@discordjs/builders": "^1.5.0",
+    "@prisma/client": "^4.11.0",
+    "colorette": "^2.0.19",
+    "concat": "^1.0.3",
+    "discord.js": "^14.8.0",
+    "dotenv": "^16.0.3",
+    "path": "^0.12.7",
+    "pg": "^8.7.3",
+    "prisma": "^4.11.0",
+    "reflect-metadata": "^0.1.13",
+    "sequelize": "^6.11.0",
+    "sequelize-typescript": "^2.1.1",
+    "sqlite3": "^5.0.2",
+    "tsyringe": "^4.7.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
+    "@typescript-eslint/parser": "^5.15.0",
+    "eslint": "^8.11.0",
+    "eslint-plugin-sonarjs": "^0.15.0",
+    "nodemon": "^2.0.15",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
+  }
+}

@@ -1,0 +1,122 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Concat prisma schema
+        run: npm run prisma:concat_prd
+
+      - name: Generate prisma client
+        run: npm run prisma:generate
+
+      - name: Build the project
+        run: npm run build
+
+      - name: Get version from package.json
+        id: set-version
+        run: |
+          VERSION=$(jq -r .version package.json)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "${VERSION}" > version.txt
+
+      - name: Get repository and owner names
+        id: set-repo-info
+        run: |
+          REPO_NAME=$(basename $GITHUB_REPOSITORY)
+          REPO_OWNER=$(dirname $GITHUB_REPOSITORY | cut -d'/' -f1)
+          echo "REPO_NAME=${REPO_NAME,,}" >> $GITHUB_ENV
+          echo "REPO_OWNER=${REPO_OWNER,,}" >> $GITHUB_ENV
+          echo "REPO_NAME=${REPO_NAME,,}" > repo_info.txt
+          echo "REPO_OWNER=${REPO_OWNER,,}" >> repo_info.txt
+
+      - name: Build and tag Docker image
+        run: |
+          docker build -t ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:${{ env.VERSION }} .
+          docker tag ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:${{ env.VERSION }} ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push Docker image with version tag
+        run: docker push ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:${{ env.VERSION }}
+
+      - name: Push Docker image with latest tag
+        run: docker push ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-info
+          path: |
+            version.txt
+            repo_info.txt
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: repo-info
+
+      - name: Set environment variables from artifact
+        run: |
+          VERSION=$(cat version.txt)
+          REPO_NAME=$(grep -m 1 REPO_NAME repo_info.txt | cut -d '=' -f 2)
+          REPO_OWNER=$(grep -m 1 REPO_OWNER repo_info.txt | cut -d '=' -f 2)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_ENV
+          echo "REPO_OWNER=${REPO_OWNER}" >> $GITHUB_ENV
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Copy .env file to VPS
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          ENV_FILE_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
+        run: |
+          echo "$ENV_FILE_CONTENT" > .env
+          ssh -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}"
+          scp -o StrictHostKeyChecking=no .env $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}/.env
+
+      - name: Deploy Docker image to VPS
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ssh -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST 'echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin'
+          ssh -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST "docker pull ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:${{ env.VERSION }}"
+          ssh -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST "docker stop ${{ env.REPO_NAME }} || true && docker rm ${{ env.REPO_NAME }} || true"
+          ssh -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST "docker run -d --env-file /home/$SSH_USERNAME/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}/.env --restart always --name ${{ env.REPO_NAME }} ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:${{ env.VERSION }}"

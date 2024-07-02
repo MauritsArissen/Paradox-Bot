@@ -1,0 +1,40 @@
+name: ESLint PR
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Run ESLint
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@v4
+
+      # Install Node.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # Install your dependencies
+      - run: npm ci
+      
+       # Concat prisma schema
+      - run: npm run prisma:concat_prd
+
+      # Generate prisma client
+      - run: npm run prisma:generate
+
+      # Build the bot
+      - run: npm run build
+
+      # Run ESLint
+      - uses: eslint/github-action@v0
+
+      - name: Build Docker image
+        run: |
+          docker build -t build-image .
+

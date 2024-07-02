@@ -1,0 +1,7 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Placeholder {
+  id Int @id @default(autoincrement())
+}
