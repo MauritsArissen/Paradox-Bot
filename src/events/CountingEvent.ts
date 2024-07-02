@@ -2,10 +2,12 @@ import { autoInjectable } from "tsyringe";
 import IEvent from "../interfaces/IEvent";
 import { Bot } from "../client";
 import { Message, TextChannel } from "discord.js";
+import { PrismaClient } from "@prisma/client";
+import CountingHelper from "../util/CountingHelper";
 
 @autoInjectable()
 class CountingEvent implements IEvent {
-	constructor(private client?: Bot) {}
+	constructor(private client?: Bot, private prisma?: PrismaClient) {}
 
 	getEventType(): string {
 		return "messageCreate";
@@ -25,23 +27,14 @@ class CountingEvent implements IEvent {
 		const number = parseInt(message.content);
 		if (number !== this.client.lastCount + 1) return await message.delete();
 
-		if (this.isMilestone(number)) {
+		if (CountingHelper.isMilestone(number)) {
 			await message.react("🎉");
 		}
 
 		this.client.lastCount = number;
 		this.client.lastUser = message.author.id;
-	}
 
-	isMilestone(number) {
-		if (number % 100 === 0) return true;
-
-		// if (number > 100) {
-		const str = number.toString();
-		if (/^(.)\1+$/.test(str)) return true;
-		// }
-
-		return false;
+		await CountingHelper.addCountingLeaderboard(this.prisma, message.author);
 	}
 }
 

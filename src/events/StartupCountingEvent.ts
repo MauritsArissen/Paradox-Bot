@@ -3,10 +3,14 @@ import { autoInjectable } from "tsyringe";
 import { Bot } from "../client";
 import IEvent from "../interfaces/IEvent";
 import Logger from "../util/Logger";
-import { Message, TextChannel } from "discord.js";
+import { FetchMessagesOptions, Message, TextChannel } from "discord.js";
+import { PrismaClient } from "@prisma/client";
+import CountingHelper from "../util/CountingHelper";
 
 @autoInjectable()
 class StartupCountingEvent implements IEvent {
+	constructor(private prisma?: PrismaClient) {}
+
 	getEventType(): string {
 		return "ready";
 	}
@@ -31,6 +35,44 @@ class StartupCountingEvent implements IEvent {
 				client.lastCount.toString(),
 			)} and last user is ${yellow(client.lastUser)}`,
 		);
+
+		if ((await this.prisma.counting.count()) === 0) {
+			Logger.warn("Counting leaderboard is empty... Trying to fill it up");
+			const messages = await this.fetchAllMessages(channel as TextChannel);
+
+			for (const msg of messages) {
+				if (msg.author.bot) continue;
+				await CountingHelper.addCountingLeaderboard(this.prisma, msg.author);
+			}
+
+			Logger.info(
+				"Counting leaderboard was filled with all messages! Total messages: " +
+					messages.length,
+			);
+		}
+	}
+
+	async fetchAllMessages(channel): Promise<Message[]> {
+		let allMessages = [];
+		let lastMessageId = null;
+		let fetchComplete = false;
+
+		while (!fetchComplete) {
+			const options: FetchMessagesOptions = { limit: 50 };
+			if (lastMessageId) {
+				options.before = lastMessageId;
+			}
+
+			const messages = await channel.messages.fetch(options);
+			if (messages.size === 0) {
+				fetchComplete = true;
+			} else {
+				allMessages = allMessages.concat(Array.from(messages.values()));
+				lastMessageId = messages.last().id;
+			}
+		}
+
+		return allMessages;
 	}
 }
 
