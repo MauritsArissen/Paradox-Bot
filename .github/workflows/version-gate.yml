@@ -30,7 +30,7 @@ jobs:
       run: |
         VERSION=$(jq -r .version package.json)
         echo "version=${VERSION}" >> $GITHUB_ENV
-      shell: bash
+      shell: bash 
 
     - name: Get base branch package version
       id: base_version
