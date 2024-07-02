@@ -19,7 +19,7 @@ class CountingScoreboardCronJobEvent implements IEvent {
 	}
 
 	async execute(): Promise<void> {
-		schedule("*/10 * * * * *", async () => {
+		schedule("*/5 * * * *", async () => {
 			const date = new Date();
 
 			const guild = await this.client.guilds.fetch("849739025999986708");
