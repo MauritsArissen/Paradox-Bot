@@ -17,10 +17,13 @@
   "dependencies": {
     "@discordjs/builders": "^1.5.0",
     "@prisma/client": "^4.11.0",
+    "axios": "^1.7.2",
     "colorette": "^2.0.19",
     "concat": "^1.0.3",
     "discord.js": "^14.8.0",
     "dotenv": "^16.0.3",
+    "google-auth-library": "^9.11.0",
+    "google-spreadsheet": "^4.1.2",
     "node-cron": "^3.0.3",
     "path": "^0.12.7",
     "pg": "^8.7.3",

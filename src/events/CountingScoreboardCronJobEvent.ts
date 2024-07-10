@@ -5,6 +5,7 @@ import { schedule } from "node-cron";
 import { Bot } from "../client";
 import Logger from "../util/Logger";
 import { TextChannel } from "discord.js";
+import config from "../config";
 
 @autoInjectable()
 class CountingScoreboardCronJobEvent implements IEvent {
@@ -22,10 +23,10 @@ class CountingScoreboardCronJobEvent implements IEvent {
 		schedule("*/5 * * * *", async () => {
 			const date = new Date();
 
-			const guild = await this.client.guilds.fetch("849739025999986708");
+			const guild = await this.client.guilds.fetch(config.guildId);
 			if (!guild) return Logger.error("Guild not found");
 			const channel = (await guild.channels.fetch(
-				"1257749628573712505",
+				config.countingChannelId,
 			)) as TextChannel;
 			if (!channel) return Logger.error("Channel not found");
 

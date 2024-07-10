@@ -6,3 +6,27 @@ model Counting {
   userId String @id
   count  Int
 }
+
+model LootCouncilRecord {
+  id            String @id
+  player        String
+  date          String
+  time          String
+  itemID        Int
+  itemString    String
+  response      String
+  votes         Int
+  class         String
+  instance      String
+  boss          String
+  gear1         String
+  gear2         String
+  responseID    String
+  isAwardReason String
+  rollType      String
+  subType       String
+  equipLoc      String
+  note          String
+  owner         String
+  itemName      String
+}

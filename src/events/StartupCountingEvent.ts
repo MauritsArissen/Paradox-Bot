@@ -6,6 +6,7 @@ import Logger from "../util/Logger";
 import { FetchMessagesOptions, Message, TextChannel } from "discord.js";
 import { PrismaClient } from "@prisma/client";
 import CountingHelper from "../util/CountingHelper";
+import config from "../config";
 
 @autoInjectable()
 class StartupCountingEvent implements IEvent {
@@ -20,9 +21,9 @@ class StartupCountingEvent implements IEvent {
 	}
 
 	async execute(client: Bot): Promise<void> {
-		const guild = await client.guilds.fetch("849739025999986708");
+		const guild = await client.guilds.fetch(config.guildId);
 		if (!guild) return Logger.error("Guild not found");
-		const channel = await guild.channels.fetch("1257749628573712505");
+		const channel = await guild.channels.fetch(config.countingChannelId);
 		if (!channel) return Logger.error("Channel not found");
 		const message = (
 			await (channel as TextChannel).messages.fetch({ limit: 1 })

@@ -2,6 +2,7 @@ import { autoInjectable } from "tsyringe";
 import IModal from "../../interfaces/IModal";
 import { Bot } from "../../client";
 import { ModalSubmitInteraction, TextChannel } from "discord.js";
+import config from "../../config";
 
 @autoInjectable()
 class VerifyCharModal implements IModal {
@@ -16,7 +17,7 @@ class VerifyCharModal implements IModal {
 			content:
 				"Thank you for submitting the form! We will review it soon and get back to you.",
 		});
-		const guild = await this.client.guilds.fetch("849739025999986708");
+		const guild = await this.client.guilds.fetch(config.guildId);
 		const channel = (await guild.channels.fetch(
 			"1250136546380746934",
 		)) as TextChannel;

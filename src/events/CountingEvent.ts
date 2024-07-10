@@ -4,6 +4,7 @@ import { Bot } from "../client";
 import { Message, TextChannel } from "discord.js";
 import { PrismaClient } from "@prisma/client";
 import CountingHelper from "../util/CountingHelper";
+import config from "../config";
 
 @autoInjectable()
 class CountingEvent implements IEvent {
@@ -19,7 +20,7 @@ class CountingEvent implements IEvent {
 
 	async execute(message: Message): Promise<any> {
 		if (message.author.bot) return;
-		if (message.channel.id !== "1257749628573712505") return;
+		if (message.channel.id !== config.countingChannelId) return;
 		if (message.author.id === this.client.lastUser)
 			return await message.delete();
 		if (isNaN(parseInt(message.content))) return await message.delete();
