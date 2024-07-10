@@ -58,7 +58,12 @@ class UpdateLootSheetCommand implements ICommand {
 		);
 
 		Logger.info("\t3. Load loot history sheet...");
-		await doc.loadInfo();
+		try {
+			await doc.loadInfo();
+		} catch (error) {
+			Logger.error("Error loading the loot history sheet!", error);
+			return;
+		}
 
 		const headerValues = [
 			"Date",
