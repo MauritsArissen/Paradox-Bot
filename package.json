@@ -1,6 +1,6 @@
 {
   "name": "paradoxbot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "src/bot.ts",
   "scripts": {
